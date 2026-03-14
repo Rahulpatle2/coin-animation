@@ -1,108 +1,143 @@
-import { useState } from 'react';
-// import './App.css';
+import { useState, useRef } from "react";
+import CoinAnimation from "./CoinAnimation";
 
-function App() {
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [fallingCoins, setFallingCoins] = useState([]);
-  const [showCard, setShowCard] = useState(false);
+export default function App() {
 
-  const playCoinSound = () => {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const coinBadgeRef = useRef(null);
+  const taskCardRef  = useRef(null);
+  const coinCircleRef = useRef(null);
+  const [animate, setAnimate]       = useState(false);
+  const [points, setPoints]         = useState(200);
+  const [badgePulse, setBadgePulse] = useState(false);
 
-    [0, 0.15, 0.3].forEach((delay) => {
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
+  function handleComplete() {
+    setAnimate(true);
+  }
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
+  function handleAnimationComplete() {
+    // Runs after all 12 coins land
+    setAnimate(false);
+    setPoints((p) => p + 50);
 
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(988, audioCtx.currentTime + delay);
-      oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + delay + 0.1);
-
-      gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime + delay);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + 0.3);
-
-      oscillator.start(audioCtx.currentTime + delay);
-      oscillator.stop(audioCtx.currentTime + delay + 0.3);
-    });
-  };
-
-  const handleCoinClick = () => {
-    if (isAnimating) return;
-    setIsAnimating(true);
-    setShowCard(false);
-
-    playCoinSound();
-
-    const coins = Array.from({ length: 15 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 80 + 10,
-      delay: Math.random() * 0.8,
-      size: Math.random() * 20 + 24,
-    }));
-
-    setFallingCoins(coins);
-
-    // Show card after coins finish falling
-    setTimeout(() => {
-      setShowCard(true);
-      setFallingCoins([]);
-      setIsAnimating(false);
-    }, 2500);
-  };
-
-  const handleRedeem = () => {
-    alert('🎉 You redeemed 200 coins successfully!');
-    setShowCard(false);
-  };
+    // Badge pulses when coins arrive
+    setBadgePulse(true);
+    setTimeout(() => setBadgePulse(false), 500);
+  }
 
   return (
-    <div className="app">
+    <div style={{ fontFamily: "sans-serif", background: "#f0faf7", minHeight: "100vh" }}>
 
-      {/* Top bar */}
-      <div className="topbar">
-        <span className="page-title">My Plans</span>
-        <div className="coin-badge" onClick={handleCoinClick}>
-          🪙 200
+      {/* Header */}
+      <div style={{
+        background: "#1D9E75",
+        padding: "12px 20px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center"
+      }}>
+        <div>
+          <div style={{ color: "#fff", fontSize: 16, fontWeight: "500" }}>Hi Devin</div>
+          <div style={{ color: "#9FE1CB", fontSize: 12 }}>How're you doing</div>
+        </div>
+
+        {/* Coin badge */}
+        <div
+          ref={coinBadgeRef}
+          style={{
+            background: "#0F6E56",
+            borderRadius: 20,
+            padding: "6px 12px",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            transform: badgePulse ? "scale(1.3)" : "scale(1)",
+            transition: "transform 0.2s ease"
+          }}
+        >
+          <div ref={coinCircleRef} style={{
+            width: 18,
+            height: 18,
+            borderRadius: "50%",
+            background: "#F5A623",
+            border: "2px solid #C47F17",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 9,
+            fontWeight: "500",
+            color: "#8B5E00"
+          }}>₹</div>
+          <span style={{ color: "#E1F5EE", fontSize: 13 }}>
+            {points}
+          </span>
         </div>
       </div>
 
-      {/* Falling coins */}
-      {fallingCoins.map(coin => (
+      {/* Task card */}
+      <div style={{ padding: 20 }}>
         <div
-          key={coin.id}
-          className="falling-coin"
+          ref={taskCardRef}
           style={{
-            left: `${coin.x}%`,
-            fontSize: `${coin.size}px`,
-            animationDelay: `${coin.delay}s`,
+            background: "#fff",
+            borderRadius: 16,
+            padding: 16,
+            border: "1px solid #9FE1CB"
           }}
         >
-          🪙
-        </div>
-      ))}
-
-      {/* Redeem Card */}
-      {showCard && (
-        <div className="overlay">
-          <div className="redeem-card">
-            <div className="card-coin-icon">🪙</div>
-            <p className="card-title">Your Coins</p>
-            <p className="card-count">200</p>
-            <p className="card-subtitle">You have 200 coins ready to redeem!</p>
-            <button className="redeem-btn" onClick={handleRedeem}>
-              🎁 Redeem Now
-            </button>
-            <button className="close-btn" onClick={() => setShowCard(false)}>
-              Maybe Later
-            </button>
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start"
+          }}>
+            <div>
+              <div style={{ fontWeight: "500", fontSize: 15, color: "#085041" }}>
+                X Ray Order
+              </div>
+              <div style={{ fontSize: 12, color: "#0F6E56", marginTop: 4 }}>
+                Caring for you toddler
+              </div>
+            </div>
+            <div style={{
+              background: "#E1F5EE",
+              color: "#0F6E56",
+              borderRadius: 12,
+              padding: "3px 10px",
+              fontSize: 12,
+              fontWeight: "500"
+            }}>
+              +50 pts
+            </div>
           </div>
+
+          <button
+            onClick={handleComplete}
+            style={{
+              marginTop: 16,
+              width: "100%",
+              background: "#1D9E75",
+              color: "#fff",
+              border: "none",
+              borderRadius: 12,
+              padding: 12,
+              fontSize: 14,
+              fontWeight: "500",
+              cursor: "pointer"
+            }}
+          >
+            Mark as complete
+          </button>
         </div>
-      )}
+      </div>
+
+      {/* Coin animation — just drop it here, it handles everything */}
+      <CoinAnimation
+        trigger={animate}
+        coinBadgeRef={coinCircleRef}
+        originRef={taskCardRef}
+        coinCount={12}
+        onComplete={handleAnimationComplete}
+      />
 
     </div>
   );
 }
-
-export default App;
